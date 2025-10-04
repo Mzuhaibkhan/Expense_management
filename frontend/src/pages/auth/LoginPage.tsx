@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Particles } from '@/components/ui/particles';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { setCredentials } from '@/store/slices/authSlice';
 import { useToast } from '@/components/ui/use-toast';
@@ -12,11 +13,18 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [color, setColor] = useState("#3b82f6");
   
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { users } = useAppSelector((state) => state.users);
+
+  useEffect(() => {
+    // Use a nice blue color for the auth pages
+    const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    setColor(isDark ? "#60a5fa" : "#3b82f6");
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,8 +65,19 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4 relative">
+      {/* Particles Background */}
+      <Particles
+        className="absolute inset-0"
+        quantity={200}
+        ease={80}
+        size={1.2}
+        color={color}
+        refresh
+      />
+      
+      {/* Login Card */}
+      <Card className="w-full max-w-md relative z-10">
         <CardHeader className="space-y-1">
           <div className="flex items-center justify-center mb-4">
             <div className="h-12 w-12 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-xl">
