@@ -7,6 +7,7 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import EmployeeDashboard from './pages/employee/EmployeeDashboard';
 import ManagerDashboard from './pages/manager/ManagerDashboard';
 import Layout from './components/layout/Layout';
+import LandingPage from './pages/LandingPage';
 
 function App() {
   const { user } = useAppSelector((state) => state.auth);
@@ -22,8 +23,7 @@ function App() {
   };
 
   const getDashboardByRole = () => {
-    if (!user) return <Navigate to="/login" replace />;
-    
+    if (!user) return <LandingPage />; // fallback (not usually reached now because used only inside layout index)
     switch (user.role) {
       case 'admin':
         return <Navigate to="/admin" replace />;
@@ -32,18 +32,18 @@ function App() {
       case 'employee':
         return <Navigate to="/employee" replace />;
       default:
-        return <Navigate to="/login" replace />;
+        return <LandingPage />;
     }
   };
 
   return (
     <>
       <Routes>
-        <Route path="/login" element={user ? getDashboardByRole() : <LoginPage />} />
-        <Route path="/signup" element={user ? getDashboardByRole() : <SignupPage />} />
-        
+        <Route path="/login" element={user ? <Navigate to="/" replace /> : <LoginPage />} />
+        <Route path="/signup" element={user ? <Navigate to="/" replace /> : <SignupPage />} />
         <Route path="/" element={<Layout />}>
-          <Route index element={getDashboardByRole()} />
+          {/* If logged in, redirect to role dashboard. If not, Layout will render LandingPage itself. */}
+          <Route index element={user ? getDashboardByRole() : <LandingPage />} />
           
           <Route
             path="/admin/*"
