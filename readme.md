@@ -1,0 +1,1 @@
+Repo for Odoo hackathon
