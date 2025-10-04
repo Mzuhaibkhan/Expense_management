@@ -1,35 +1,54 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useAppDispatch } from '@/store/hooks';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { setCredentials } from '@/store/slices/authSlice';
-import { addUser } from '@/store/slices/usersSlice';
-import { setCompany } from '@/store/slices/settingsSlice';
-import { useGetCountriesQuery } from '@/store/services/apiSlice';
 import { useToast } from '@/components/ui/use-toast';
-import type { User, Company } from '@/types';
+import { authService } from '@/services/authService';
+import type { UserRole } from '@/types';
 
 export default function SignupPage() {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [selectedCountry, setSelectedCountry] = useState('');
-  const [loading, setLoading] = useState(false);
-  
-  const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
   const { toast } = useToast();
-  const { data: countries, isLoading: countriesLoading } = useGetCountriesQuery();
+  const { user } = useAppSelector((state) => state.auth);
 
-  const handleSignup = async (e: React.FormEvent) => {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    role: 'employee' as UserRole,
+  });
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    // If user is already logged in, redirect based on their role
+    if (user) {
+      const redirectUrl = authService.getRedirectUrl(user.role);
+      navigate(redirectUrl, { replace: true });
+    }
+  }, [user, navigate]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (password !== confirmPassword) {
+    if (submitting) return;
+
+    // Validation
+    if (!formData.name || !formData.email || !formData.password) {
+      toast({
+        title: 'Error',
+        description: 'Please fill in all required fields',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
       toast({
         title: 'Error',
         description: 'Passwords do not match',
@@ -38,42 +57,60 @@ export default function SignupPage() {
       return;
     }
 
-    setLoading(true);
-
-    setTimeout(() => {
-      const country = countries?.find((c) => c.name.common === selectedCountry);
-      const baseCurrency = country ? Object.keys(country.currencies)[0] : 'USD';
-      
-      const companyId = 'company-' + Date.now();
-      const userId = 'user-' + Date.now();
-      
-      const newCompany: Company = {
-        id: companyId,
-        name: `${name}'s Company`,
-        baseCurrency,
-        createdAt: new Date().toISOString(),
-      };
-      
-      const newUser: User = {
-        id: userId,
-        name,
-        email,
-        role: 'admin',
-        companyId,
-      };
-      
-      dispatch(setCompany(newCompany));
-      dispatch(addUser(newUser));
-      dispatch(setCredentials({ user: newUser, token: 'mock-token-' + userId }));
-      
+    if (formData.password.length < 6) {
       toast({
-        title: 'Account Created',
-        description: 'Your company has been set up successfully!',
+        title: 'Error',
+        description: 'Password must be at least 6 characters long',
+        variant: 'destructive',
       });
-      
-      navigate('/admin');
-      setLoading(false);
-    }, 1000);
+      return;
+    }
+
+    setSubmitting(true);
+
+    try {
+      const result = await authService.signup({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        role: formData.role,
+        companyId: 'default-company', // You might want to make this dynamic
+      });
+
+      if (result.success && result.user) {
+        // Store user in Redux
+        dispatch(setCredentials({ 
+          user: result.user, 
+          token: 'supabase-session'
+        }));
+
+        // Show success message
+        toast({
+          title: 'Account Created',
+          description: `Welcome, ${result.user.name}! Your account has been created successfully.`,
+        });
+
+        // Redirect based on user role
+        const redirectUrl = authService.getRedirectUrl(result.user.role);
+        navigate(redirectUrl, { replace: true });
+
+      } else {
+        // Show error message
+        toast({
+          title: 'Signup Failed',
+          description: result.error || 'Failed to create account',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'An unexpected error occurred during signup',
+        variant: 'destructive',
+      });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -85,91 +122,80 @@ export default function SignupPage() {
               E
             </div>
           </div>
-          <CardTitle className="text-2xl text-center">Create Account</CardTitle>
-          <CardDescription className="text-center">
-            Set up your company and admin account
-          </CardDescription>
+          <CardTitle className="text-2xl text-center">Create your account</CardTitle>
+          <CardDescription className="text-center">Join your team and start managing expenses</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSignup} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>
               <Input
                 id="name"
+                type="text"
                 placeholder="John Doe"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 required
               />
             </div>
-            
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Work Email</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="john@company.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                placeholder="name@company.com"
+                value={formData.email}
+                autoComplete="email"
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 required
               />
             </div>
-            
             <div className="space-y-2">
-              <Label htmlFor="country">Country</Label>
-              <Select value={selectedCountry} onValueChange={setSelectedCountry} required>
+              <Label htmlFor="role">Role</Label>
+              <Select
+                value={formData.role}
+                onValueChange={(value: UserRole) => setFormData({ ...formData, role: value })}
+              >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select your country" />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {countriesLoading ? (
-                    <SelectItem value="loading" disabled>Loading countries...</SelectItem>
-                  ) : (
-                    countries?.map((country) => (
-                      <SelectItem key={country.name.common} value={country.name.common}>
-                        {country.name.common}
-                      </SelectItem>
-                    ))
-                  )}
+                  <SelectItem value="employee">Employee</SelectItem>
+                  <SelectItem value="sub-manager">Sub-Manager</SelectItem>
+                  <SelectItem value="manager">Manager</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground">
-                Your company's base currency will be set based on this country
-              </p>
             </div>
-            
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
                 type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Create a secure password"
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 required
               />
             </div>
-            
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">Confirm Password</Label>
               <Input
                 id="confirmPassword"
                 type="password"
-                placeholder="••••••••"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Confirm your password"
+                value={formData.confirmPassword}
+                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                 required
               />
             </div>
-            
-            <Button type="submit" className="w-full" disabled={loading || countriesLoading}>
-              {loading ? 'Creating Account...' : 'Create Account'}
+            <Button type="submit" className="w-full" disabled={submitting}>
+              {submitting ? 'Creating Account...' : 'Create Account'}
             </Button>
           </form>
-          
           <div className="mt-4 text-center text-sm">
             <Link to="/login" className="text-primary hover:underline">
-              Already have an account? Login
+              Already have an account? Sign in
             </Link>
           </div>
         </CardContent>

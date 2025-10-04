@@ -1,4 +1,4 @@
-export type UserRole = 'admin' | 'manager' | 'employee';
+export type UserRole = 'admin' | 'manager' | 'sub-manager' | 'employee';
 
 export type ExpenseStatus = 'draft' | 'waiting' | 'approved' | 'rejected';
 
@@ -13,6 +13,7 @@ export interface User {
   role: UserRole;
   managerId?: string;
   companyId: string;
+  databaseId?: string; // The manager_id primary key from the database
 }
 
 export interface Company {

@@ -30,7 +30,7 @@ export function MarketingNavbar() {
               <Link to="/login">
                 <Button variant="ghost">Login</Button>
               </Link>
-              <Link to="/signup">
+              <Link to="/login">
                 <Button>Get Started</Button>
               </Link>
             </div>

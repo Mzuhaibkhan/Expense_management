@@ -5,8 +5,15 @@ interface SettingsState {
   company: Company | null;
 }
 
+const mockCompany: Company = {
+  id: 'company-1',
+  name: 'ExpenseFlow Demo Inc.',
+  baseCurrency: 'USD',
+  createdAt: new Date().toISOString(),
+};
+
 const initialState: SettingsState = {
-  company: localStorage.getItem('company') ? JSON.parse(localStorage.getItem('company')!) : null,
+  company: localStorage.getItem('company') ? JSON.parse(localStorage.getItem('company')!) : mockCompany,
 };
 
 const settingsSlice = createSlice({
