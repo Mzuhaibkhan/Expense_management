@@ -11,18 +11,23 @@ export default function Navbar() {
 
   const handleLogout = () => {
     dispatch(logout());
-    navigate('/login');
+    // After logout show landing page (root renders landing when no user)
+    navigate('/', { replace: true });
+  };
+
+  const goHome = () => {
+    navigate('/');
   };
 
   return (
     <nav className="border-b bg-card">
       <div className="flex h-16 items-center px-6">
-        <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold">
+        <button onClick={goHome} className="flex items-center gap-2 group focus:outline-none" aria-label="Go to landing page">
+          <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold group-hover:scale-105 transition-transform">
             E
           </div>
-          <span className="text-xl font-bold">Expense Manager</span>
-        </div>
+            <span className="text-xl font-bold group-hover:text-primary transition-colors">Expense Manager</span>
+        </button>
         
         <div className="ml-auto flex items-center gap-4">
           <Button variant="ghost" size="icon">
