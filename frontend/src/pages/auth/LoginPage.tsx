@@ -16,7 +16,7 @@ export default function LoginPage() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { users } = useAppSelector((state) => state.users);
+  const { users } = useAppSelector((state: any) => state.users);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,7 +24,7 @@ export default function LoginPage() {
 
     // Mock authentication
     setTimeout(() => {
-      const user = users.find((u) => u.email === email);
+  const user = users.find((u: any) => u.email === email);
       
       if (user) {
         dispatch(setCredentials({ user, token: 'mock-token-' + user.id }));
@@ -40,6 +40,9 @@ export default function LoginPage() {
             break;
           case 'manager':
             navigate('/manager');
+            break;
+          case 'submanager':
+            navigate('/submanager');
             break;
           case 'employee':
             navigate('/employee');

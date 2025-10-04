@@ -6,11 +6,12 @@ import SignupPage from './pages/auth/SignupPage';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import EmployeeDashboard from './pages/employee/EmployeeDashboard';
 import ManagerDashboard from './pages/manager/ManagerDashboard';
+import SubmanagerDashboard from './pages/submanager/SubmanagerDashboard';
 import Layout from './components/layout/Layout';
 import LandingPage from './pages/LandingPage';
 
 function App() {
-  const { user } = useAppSelector((state) => state.auth);
+  const { user } = useAppSelector((state: any) => state.auth);
 
   const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode; allowedRoles: string[] }) => {
     if (!user) {
@@ -29,6 +30,8 @@ function App() {
         return <Navigate to="/admin" replace />;
       case 'manager':
         return <Navigate to="/manager" replace />;
+      case 'submanager':
+        return <Navigate to="/submanager" replace />;
       case 'employee':
         return <Navigate to="/employee" replace />;
       default:
@@ -68,6 +71,15 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['manager']}>
                 <ManagerDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/submanager/*"
+            element={
+              <ProtectedRoute allowedRoles={['submanager']}>
+                <SubmanagerDashboard />
               </ProtectedRoute>
             }
           />

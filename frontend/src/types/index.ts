@@ -1,4 +1,4 @@
-export type UserRole = 'admin' | 'manager' | 'employee';
+export type UserRole = 'admin' | 'manager' | 'submanager' | 'employee';
 
 export type ExpenseStatus = 'draft' | 'waiting' | 'approved' | 'rejected';
 

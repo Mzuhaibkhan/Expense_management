@@ -13,7 +13,7 @@ import { useAppSelector } from '@/store/hooks';
 import { cn } from '@/lib/utils';
 
 export default function Sidebar() {
-  const { user } = useAppSelector((state) => state.auth);
+  const { user } = useAppSelector((state: any) => state.auth);
 
   const adminLinks = [
     { to: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
@@ -34,10 +34,18 @@ export default function Sidebar() {
     { to: '/manager/team-expenses', icon: UserCog, label: 'Team Expenses' },
   ];
 
+  const submanagerLinks = [
+    { to: '/submanager', icon: LayoutDashboard, label: 'Dashboard' },
+    { to: '/submanager/approvals', icon: ClipboardList, label: 'Approvals Queue' },
+    { to: '/submanager/team-expenses', icon: UserCog, label: 'Team Expenses' },
+  ];
+
   const getLinks = () => {
     switch (user?.role) {
       case 'admin':
         return adminLinks;
+      case 'submanager':
+        return submanagerLinks;
       case 'manager':
         return managerLinks;
       case 'employee':

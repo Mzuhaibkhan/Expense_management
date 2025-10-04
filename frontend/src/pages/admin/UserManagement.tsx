@@ -24,10 +24,11 @@ export default function UserManagement() {
 
   const dispatch = useAppDispatch();
   const { toast } = useToast();
-  const { users } = useAppSelector((state) => state.users);
-  const { user: currentUser } = useAppSelector((state) => state.auth);
+  const { users } = useAppSelector((state: any) => state.users);
+  const { user: currentUser } = useAppSelector((state: any) => state.auth);
 
-  const managers = users.filter((u) => u.role === 'manager');
+  const managers = users.filter((u: any) => u.role === 'manager');
+  const submanagers = users.filter((u: any) => u.role === 'submanager');
 
   const handleOpenDialog = (user?: User) => {
     if (user) {
@@ -120,14 +121,14 @@ export default function UserManagement() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {users.map((user) => (
+              {users.map((user: any) => (
                 <TableRow key={user.id}>
                   <TableCell className="font-medium">{user.name}</TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell className="capitalize">{user.role}</TableCell>
                   <TableCell>
                     {user.managerId
-                      ? users.find((u) => u.id === user.managerId)?.name || 'N/A'
+                      ? users.find((u: any) => u.id === user.managerId)?.name || 'N/A'
                       : 'N/A'}
                   </TableCell>
                   <TableCell className="text-right">
@@ -198,21 +199,52 @@ export default function UserManagement() {
                     <SelectItem value="employee">Employee</SelectItem>
                     <SelectItem value="manager">Manager</SelectItem>
                     <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="submanager">Submanager</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               {formData.role === 'employee' && (
                 <div className="space-y-2">
-                  <Label htmlFor="manager">Manager</Label>
+                  <Label htmlFor="manager">Manager / Submanager</Label>
                   <Select
                     value={formData.managerId}
-                    onValueChange={(value) => setFormData({ ...formData, managerId: value })}
+                    onValueChange={(value: string) => setFormData({ ...formData, managerId: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a manager or submanager" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <optgroup label="Managers">
+                        {managers.map((manager: any) => (
+                          <SelectItem key={manager.id} value={manager.id}>
+                            {manager.name}
+                          </SelectItem>
+                        ))}
+                      </optgroup>
+                      <optgroup label="Submanagers">
+                        {submanagers.map((sm: any) => (
+                          <SelectItem key={sm.id} value={sm.id}>
+                            {sm.name}
+                          </SelectItem>
+                        ))}
+                      </optgroup>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {formData.role === 'submanager' && (
+                <div className="space-y-2">
+                  <Label htmlFor="manager">Manager (assign parent manager)</Label>
+                  <Select
+                    value={formData.managerId}
+                    onValueChange={(value: string) => setFormData({ ...formData, managerId: value })}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select a manager" />
                     </SelectTrigger>
                     <SelectContent>
-                      {managers.map((manager) => (
+                      {managers.map((manager: any) => (
                         <SelectItem key={manager.id} value={manager.id}>
                           {manager.name}
                         </SelectItem>
