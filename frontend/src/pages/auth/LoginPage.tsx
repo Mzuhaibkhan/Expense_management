@@ -1,59 +1,97 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import type { FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { setCredentials } from '@/store/slices/authSlice';
 import { useToast } from '@/components/ui/use-toast';
+import { authService } from '@/services/authService';
+import { debugDatabase } from '@/services/debugService';
+
 
 export default function LoginPage() {
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const { toast } = useToast();
+  const { user } = useAppSelector((state) => state.auth);
+  
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  
-  const dispatch = useAppDispatch();
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const { users } = useAppSelector((state) => state.users);
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  useEffect(() => {
+    // If user is already logged in, redirect based on their role
+    if (user) {
+      const redirectUrl = authService.getRedirectUrl(user.role);
+      navigate(redirectUrl, { replace: true });
+    }
+  }, [user, navigate]);
+
+  const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    if (submitting) return;
+    
+    if (!email || !password) {
+      toast({
+        title: 'Error',
+        description: 'Please enter both email and password',
+        variant: 'destructive',
+      });
+      return;
+    }
 
-    // Mock authentication
-    setTimeout(() => {
-      const user = users.find((u) => u.email === email);
+    setSubmitting(true);
+    
+    try {
+      // Debug: Check database connection and user existence
+      console.log('=== LOGIN DEBUG START ===');
+      await debugDatabase.testDatabaseConnection();
+      await debugDatabase.findUserByEmail(email);
+      console.log('=== LOGIN DEBUG END ===');
       
-      if (user) {
-        dispatch(setCredentials({ user, token: 'mock-token-' + user.id }));
+      const result = await authService.login({ email, password });
+      
+      if (result.success && result.user) {
+        // Store user in Redux
+        dispatch(setCredentials({ 
+          user: result.user, 
+          token: 'supabase-session' // Simple token for now
+        }));
+        
+        // Get redirect URL based on user role
+        const redirectUrl = authService.getRedirectUrl(result.user.role);
+        
+        // Show success message with role information
         toast({
           title: 'Login Successful',
-          description: `Welcome back, ${user.name}!`,
+          description: `Welcome back, ${result.user.name}! Redirecting to ${result.user.role} dashboard...`,
         });
         
-        // Navigate based on role
-        switch (user.role) {
-          case 'admin':
-            navigate('/admin');
-            break;
-          case 'manager':
-            navigate('/manager');
-            break;
-          case 'employee':
-            navigate('/employee');
-            break;
-        }
+        console.log(`Redirecting ${result.user.role} user to:`, redirectUrl);
+        
+        // Redirect based on user role
+        navigate(redirectUrl, { replace: true });
+        
       } else {
+        // Show error message
         toast({
           title: 'Login Failed',
-          description: 'Invalid email or password',
+          description: result.error || 'Invalid credentials',
           variant: 'destructive',
         });
       }
-      setLoading(false);
-    }, 1000);
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'An unexpected error occurred during login',
+        variant: 'destructive',
+      });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -65,13 +103,13 @@ export default function LoginPage() {
               E
             </div>
           </div>
-          <CardTitle className="text-2xl text-center">Welcome Back</CardTitle>
-          <CardDescription className="text-center">
-            Enter your credentials to access your account
-          </CardDescription>
+          <CardTitle className="text-2xl text-center">Sign in to your account</CardTitle>
+          <CardDescription className="text-center">Use your work email to continue</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleLogin} className="space-y-4">
+          
+          
+          <form onSubmit={onSubmit} className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -79,6 +117,7 @@ export default function LoginPage() {
                 type="email"
                 placeholder="name@company.com"
                 value={email}
+                autoComplete="email"
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
@@ -94,23 +133,20 @@ export default function LoginPage() {
                 required
               />
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Logging in...' : 'Login'}
+            <Button type="submit" className="w-full" disabled={submitting}>
+              {submitting ? 'Signing in...' : 'Sign In'}
             </Button>
           </form>
-          
           <div className="mt-4 text-center text-sm">
             <Link to="/signup" className="text-primary hover:underline">
-              Don't have an account? Sign up
+              Need to create an account? Contact your administrator
             </Link>
-          </div>
-          
-          <div className="mt-6 p-4 bg-muted rounded-lg">
-            <p className="text-xs text-muted-foreground mb-2">Demo Credentials:</p>
-            <p className="text-xs">Admin: admin@company.com</p>
           </div>
         </CardContent>
       </Card>
+      
+      
+      
     </div>
   );
 }

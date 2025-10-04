@@ -22,16 +22,22 @@ export default function Sidebar() {
     { to: '/admin/settings', icon: Settings, label: 'Company Settings' },
   ];
 
-  const employeeLinks = [
-    { to: '/employee', icon: LayoutDashboard, label: 'Dashboard' },
-    { to: '/employee/submit-expense', icon: DollarSign, label: 'Submit Expense' },
-    { to: '/employee/expenses', icon: FileText, label: 'My Expenses' },
-  ];
-
   const managerLinks = [
     { to: '/manager', icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/manager/approvals', icon: ClipboardList, label: 'Approvals Queue' },
     { to: '/manager/team-expenses', icon: UserCog, label: 'Team Expenses' },
+  ];
+
+  const subManagerLinks = [
+    { to: '/sub-manager', icon: LayoutDashboard, label: 'Dashboard' },
+    { to: '/sub-manager/approvals', icon: ClipboardList, label: 'Approvals Queue' },
+    { to: '/sub-manager/team-expenses', icon: UserCog, label: 'Team Expenses' },
+  ];
+
+  const employeeLinks = [
+    { to: '/employee', icon: LayoutDashboard, label: 'Dashboard' },
+    { to: '/employee/submit-expense', icon: DollarSign, label: 'Submit Expense' },
+    { to: '/employee/expenses', icon: FileText, label: 'My Expenses' },
   ];
 
   const getLinks = () => {
@@ -40,6 +46,8 @@ export default function Sidebar() {
         return adminLinks;
       case 'manager':
         return managerLinks;
+      case 'sub-manager':
+        return subManagerLinks;
       case 'employee':
         return employeeLinks;
       default:
